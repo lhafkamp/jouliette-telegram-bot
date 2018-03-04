@@ -9,6 +9,10 @@ const app = express();
 const client = Stomp.client(process.env.SPECTRAL_DB_URL);
 client.connect(process.env.MQTT_USER, process.env.MQTT_PASS, onConnect, console.error, '/');
 
+// set up Telegram bot
+const token = process.env.BOT_TOKEN;
+const bot = new TelegramBot(token, {polling: true});
+
 // connection endpoints
 const endpoints = {
 	'#': '/exchange/power/#',  // all
@@ -82,25 +86,16 @@ function checkForData(data) {
 }
 
 function reportEmptyData() {
-	console.log('notify bot even though its true');
+	console.log('probes are online but not reporting data');
 }
 
 function reportFalse(falseProbes) {
-	console.log(falseProbes);
-	console.log('notify bot for being false');
+	console.log('probes are offline');
+
+	const response = `the following boats are currently down: ${falseProbes}`;
+
+	bot.sendMessage(process.env.CHAT_ID, response);
 }
-
-// // bot stuff
-// const token = process.env.BOT_TOKEN;
-// const bot = new TelegramBot(token, {polling: true});
-
-// bot.on('message', (msg) => {  
-// 	var greeting = 'Hi';
-// 	var response = 'Hello Human';
-// 	if (msg.text === greetings) {
-// 		bot.sendMessage(msg.chat.id, response);
-// 	}
-// });
 
 // get the public files
 app.use(express.static('public'));
