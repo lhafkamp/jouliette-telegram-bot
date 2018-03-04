@@ -47,38 +47,60 @@ function onData(data) {
 	const trueProbes = keys.filter(key => probes[key]);
 	const falseProbes = keys.filter(key => !probes[key]);
 
-	subscribeToTrue(trueProbes)
+	if (trueProbes.length > 0) {
+		subscribeToTrue(trueProbes);
+	}
+
+	if (falseProbes.length > 0) {
+		reportFalse(falseProbes);
+	}
 }
+
+let subscription = null;
 
 function subscribeToTrue(probes) {
-	// probes.forEach(probe => {
-	// 	client.subscribe(endpoints[probe], test);
-	// });
+	// single probe as a test
+	const probe = probes[0];
 
-
-	//** TEST **//
-	const testProbe = probes[0];
-	console.log(`testing... ${testProbe}`);
-	client.subscribe(endpoints[probes[testProbe]], checkForEmptyObject);
-}
-
-function checkForEmptyObject(data) {
-	console.log(data.body);
-
-	// if object is empty
-}
-
-// bot stuff
-const token = process.env.BOT_TOKEN;
-const bot = new TelegramBot(token, {polling: true});
-
-bot.on('message', (msg) => {  
-	var greeting = 'Hi';
-	var response = 'Hello Human';
-	if (msg.text === greetings) {
-		bot.sendMessage(msg.chat.id, response);
+	if (subscription) {
+		subscription.unsubscribe();
 	}
-});
+
+	subscription = client.subscribe(endpoints[probe], checkForData);
+}
+
+function checkForData(data) {
+	const probe = JSON.parse(data.body);
+
+	if (!probe) {
+		reportEmptyData();
+
+		if (subscription) {
+			subscription.unsubscribe();
+		}
+	}
+}
+
+function reportEmptyData() {
+	console.log('notify bot even though its true');
+}
+
+function reportFalse(falseProbes) {
+	console.log(falseProbes);
+	console.log('notify bot for being false');
+}
+
+// // bot stuff
+// const token = process.env.BOT_TOKEN;
+// const bot = new TelegramBot(token, {polling: true});
+
+// bot.on('message', (msg) => {  
+// 	var greeting = 'Hi';
+// 	var response = 'Hello Human';
+// 	if (msg.text === greetings) {
+// 		bot.sendMessage(msg.chat.id, response);
+// 	}
+// });
 
 // get the public files
 app.use(express.static('public'));
