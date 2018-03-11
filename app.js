@@ -51,49 +51,44 @@ function onData(data) {
 	const trueProbes = keys.filter(key => probes[key]);
 	const falseProbes = keys.filter(key => !probes[key]);
 
+	// send all the true probes to the subscribeToTrue function
 	if (trueProbes.length > 0) {
 		subscribeToTrue(trueProbes);
 	}
 
+	// send all the false probes to the reportFalse function
 	if (falseProbes.length > 0) {
 		reportFalse(falseProbes);
 	}
 }
 
-let subscription = null;
-
+// subscribe to all true probes
 function subscribeToTrue(probes) {
-	// single probe as a test
-	const probe = probes[0];
-
-	if (subscription) {
-		subscription.unsubscribe();
-	}
-
-	subscription = client.subscribe(endpoints[probe], checkForData);
+	probes.forEach(probe => {
+		client.subscribe(endpoints[probe], checkForData);
+	});
 }
 
+// call the reportEmptyData function if a true probe doesn't provide data
 function checkForData(data) {
 	const probe = JSON.parse(data.body);
 
 	if (!probe) {
-		reportEmptyData();
-
-		if (subscription) {
-			subscription.unsubscribe();
-		}
+		reportEmptyData(probe.id);
 	}
 }
 
-function reportEmptyData() {
-	console.log('probes are online but not reporting data');
+// report to the Telegram bot
+function reportEmptyData(probe) {
+	console.log(`boat ${probe} is online but not reporting data`);
+	const response = `boat ${probe} is online but not reporting data`;
+	bot.sendMessage(process.env.CHAT_ID, response);
 }
 
+// report to the Telegram bot
 function reportFalse(falseProbes) {
-	console.log('probes are offline');
-
+	console.log(`the following boats are currently down: ${falseProbes}`);
 	const response = `the following boats are currently down: ${falseProbes}`;
-
 	bot.sendMessage(process.env.CHAT_ID, response);
 }
 
