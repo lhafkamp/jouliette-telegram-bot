@@ -44,26 +44,41 @@ function onConnect() {
 	client.subscribe(endpoints.Liveliness, onData);
 }
 
+// variables for comparing old data with new data
+let oldTrue = null;
+let oldFalse = null;
+
 // checks which probes are on/off (return true/false)
 function onData(data) {
 	const probes = JSON.parse(data.body);
 	const keys = Object.keys(probes);
-	const trueProbes = keys.filter(key => probes[key]);
-	const falseProbes = keys.filter(key => !probes[key]);
 
-	// send all the true probes to the subscribeToTrue function
-	if (trueProbes.length > 0) {
+	// filter the incoming data for true/false and sort them so they are easy to compare
+	const trueProbes = keys.filter(key => probes[key]).sort();
+	const falseProbes = keys.filter(key => !probes[key]).sort();
+
+	// variables for comparing old data with new data
+	let newTrue = trueProbes;
+	let newFalse = falseProbes;
+	
+	// send all the new true probes to the subscribeToTrue function
+	if (JSON.stringify(oldTrue) !== JSON.stringify(newTrue) && trueProbes.length > 0) {
 		subscribeToTrue(trueProbes);
 	}
 
-	// send all the false probes to the reportFalse function
-	if (falseProbes.length > 0) {
+	// send all the new false probes to the reportFalse function
+	if (JSON.stringify(oldFalse) !== JSON.stringify(newFalse) && falseProbes.length > 0) {
 		reportFalse(falseProbes);
 	}
+
+	// variables for comparing old data with new data
+	oldTrue = trueProbes;
+	oldFalse = falseProbes;
 }
 
 // subscribe to all true probes
 function subscribeToTrue(probes) {
+	console.log('incoming true probes');
 	probes.forEach(probe => {
 		client.subscribe(endpoints[probe], checkForData);
 	});
@@ -72,6 +87,7 @@ function subscribeToTrue(probes) {
 // call the reportEmptyData function if a true probe doesn't provide data
 function checkForData(data) {
 	const probe = JSON.parse(data.body);
+	console.log('incoming subscription');
 
 	if (!probe) {
 		reportEmptyData(probe.id);
@@ -80,16 +96,16 @@ function checkForData(data) {
 
 // report to the Telegram bot
 function reportEmptyData(probe) {
-	console.log(`boat ${probe} is online but not reporting data`);
 	const response = `boat ${probe} is online but not reporting data`;
 	bot.sendMessage(process.env.CHAT_ID, response);
+	console.log(response);
 }
 
 // report to the Telegram bot
 function reportFalse(falseProbes) {
-	console.log(`the following boats are currently down: ${falseProbes}`);
 	const response = `the following boats are currently down: ${falseProbes}`;
 	bot.sendMessage(process.env.CHAT_ID, response);
+	console.log(response);
 }
 
 // get the public files
