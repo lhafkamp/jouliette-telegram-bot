@@ -4,6 +4,7 @@ const TelegramBot = require('node-telegram-bot-api');
 const Stomp = require('@stomp/stompjs');
 require('dotenv').config();
 const app = express();
+const port = 9001;
 
 // connect to Spectrals RabbitMQ to allow for a stomp socket connection
 const client = Stomp.client(process.env.SPECTRAL_DB_URL);
@@ -44,35 +45,51 @@ function onConnect() {
 	client.subscribe(endpoints.Liveliness, onData);
 }
 
-// variables for comparing old data with new data
-let oldTrue = null;
-let oldFalse = null;
-
-// checks which probes are on/off (return true/false)
+// on incoming Liveliness data..
 function onData(data) {
 	const probes = JSON.parse(data.body);
 	const keys = Object.keys(probes);
 
-	// filter the incoming data for true/false and sort them so they are easy to compare
-	const trueProbes = keys.filter(key => probes[key]).sort();
-	const falseProbes = keys.filter(key => !probes[key]).sort();
+	// calls the functions to check which probes are on/off (return true/false)
+	findTrueProbes(probes, keys);
+	findFalseProbes(probes, keys);
+}
 
-	// variables for comparing old data with new data
+// variables for comparing old data with new data
+let oldTrue = null;
+let oldFalse = null;
+
+// checks which probes are on (return true)
+function findTrueProbes(probes, keys) {
+	// filter the incoming data for true and sort them so they are easy to compare
+	const trueProbes = keys.filter(key => probes[key]).sort();
+
+	// variable for comparing old data with new data
 	let newTrue = trueProbes;
-	let newFalse = falseProbes;
-	
+
 	// send all the new true probes to the subscribeToTrue function
 	if (JSON.stringify(oldTrue) !== JSON.stringify(newTrue) && trueProbes.length > 0) {
 		subscribeToTrue(trueProbes);
 	}
+
+	// variable for comparing old data with new data
+	oldTrue = trueProbes;
+}
+
+// checks which probes are off that we haven't seen yet (return false)
+function findFalseProbes(probes, keys) {
+	// filter the incoming data for false and sort them so they are easy to compare
+	const falseProbes = keys.filter(key => !probes[key]).sort();
+
+	// variable for comparing old data with new data
+	let newFalse = falseProbes;
 
 	// send all the new false probes to the reportFalse function
 	if (JSON.stringify(oldFalse) !== JSON.stringify(newFalse) && falseProbes.length > 0) {
 		reportFalse(falseProbes);
 	}
 
-	// variables for comparing old data with new data
-	oldTrue = trueProbes;
+	// variable for comparing old data with new data
 	oldFalse = falseProbes;
 }
 
@@ -89,15 +106,20 @@ function subscribeToTrue(probes) {
 // call the reportEmptyData function if a true probe doesn't provide data
 function checkForData(data) {
 	const probe = JSON.parse(data.body);
+	const sub = data.headers.subscription;
 
 	if (!probe) {
 		reportEmptyData(probe.id);
 	}
 
-	// unsubscribe after the potential reportEmptyData()
-	trueProbeArray.forEach(item => {
-		if (item.id === data.headers.subscription) {
-			item.unsubscribe()
+	unsubscribe(sub);
+}
+
+// unsubscribe to the active true probes
+function unsubscribe(sub) {
+	trueProbeArray.forEach(probe => {
+		if (probe.id === sub) {
+			probe.unsubscribe()
 		}
 	});
 }
@@ -128,6 +150,6 @@ app.get('/', (req, res) => {
 	res.render('index');
 });
 
-app.listen(9001, () => {
-	console.log('server running on 9001..');
+app.listen(port, () => {
+	console.log(`server running on ${port}...`);
 });
