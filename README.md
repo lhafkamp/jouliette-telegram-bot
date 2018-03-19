@@ -4,9 +4,24 @@ A Telegram bot that notifies the user once something is wrong with the solar pow
 ## Features
 -  [x] sends a notification through a Telegram bot when a boat is offline
 -  [x] sends a notification through a Telegram bot when a boat is online but not reporting data
--  [x] checks if the incoming data is the same to make sure you don't get spammed with old information.
+-  [x] checks if the incoming data is the same to make sure you don't get spammed with old information
 
-## Environment variables
+## Build
+Clone this repository:
+```bash
+git clone
+```
+  
+Install packages:
+```bash
+npm install
+```
+Start the server:
+```bash
+npm start
+```
+
+### Environment variables
 In order to get this app working you need to fill in the following <a href="https://www.npmjs.com/package/dotenv">dotenv</a> variables:  
 
 ```bash
@@ -39,6 +54,7 @@ The url should show you an object with your chat ID.
 CHAT_ID={your chat ID here}
 ```
 
+All done!
 
 ## License
 
