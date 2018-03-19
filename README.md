@@ -38,3 +38,10 @@ The url should show you an object with your chat ID.
 ```bash
 CHAT_ID={your chat ID here}
 ```
+
+
+## License
+
+MIT License  
+
+Copyright © 2017 Luuk Hafkamp
