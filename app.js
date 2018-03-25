@@ -12,7 +12,7 @@ client.connect(process.env.MQTT_USER, process.env.MQTT_PASS, onConnect, console.
 
 // set up Telegram bot
 const token = process.env.BOT_TOKEN;
-const bot = new TelegramBot(token, {polling: true});
+const bot = new TelegramBot(token, {polling: false});
 
 // connection endpoints
 const endpoints = {
@@ -127,14 +127,14 @@ function unsubscribe(sub) {
 // report to the Telegram bot
 function reportEmptyData(probe) {
 	const response = `boat ${probe} is online but not reporting data`;
-	// bot.sendMessage(process.env.CHAT_ID, response);
+	bot.sendMessage(process.env.CHAT_ID, response);
 	console.log(response);
 }
 
 // report to the Telegram bot
 function reportFalse(falseProbes) {
 	const response = `the following boats are currently down: ${falseProbes}`;
-	// bot.sendMessage(process.env.CHAT_ID, response);
+	bot.sendMessage(process.env.CHAT_ID, response);
 	console.log(response);
 }
 
