@@ -8,7 +8,9 @@ A Telegram bot that notifies the user once something is wrong with the solar pow
 -  [x] listens to commando's like /start /help /report and reponds accordingly
 
 ## How the bot works
-Once the server is running and the bot is added to your group it will report the current status of the boats. The use of this bot is to notify you whenever something is wrong so that you can take immediate action into fixing it. The bot will report which boats are offline and thus not sending data and it will report which boats are online but also not sending data. The bot offers a /help command to help you set up the bot with the server and a /report command to remind you what the latest status was.
+Once the server is running and the bot is added to your group it will report the current status of the boats. The use of this bot is to notify you whenever something is wrong so that you can take immediate action into fixing it. The bot will report which boats are offline and thus not sending data and it will report which boats are online but also not sending data. Once this data is reported it won't report again until something changed in the data (another offline boat for example).
+
+The bot also offers a /help command to help you set up the bot with the server and a /report command to remind you what the latest status was.
 
 ## Build
 Clone this repository:
